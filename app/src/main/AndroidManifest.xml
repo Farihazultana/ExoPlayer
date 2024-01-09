@@ -19,9 +19,6 @@
             android:name=".MediaPlayerActvity"
             android:exported="false" />
         <activity
-            android:name=".GoogleDrivePlayVideo"
-            android:exported="false" />
-        <activity
             android:name=".SplashScreenActivity"
             android:exported="false" />
         <activity
