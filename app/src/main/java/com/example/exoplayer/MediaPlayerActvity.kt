@@ -24,7 +24,7 @@ class MediaPlayerActvity : AppCompatActivity() {
         val url3 = intent.getStringExtra("url3")
 
         player = ExoPlayer.Builder(this).build()
-        binding.playerView.player = player
+        binding2.playerView.player = player
 
         /*val mediaItem =
             MediaItem.Builder().setUri(url).setMimeType(MimeTypes.APPLICATION_MP4).build()
@@ -50,7 +50,7 @@ class MediaPlayerActvity : AppCompatActivity() {
         // Prepare the player.
         player.prepare()
         // Start the playback.
-        player.play()
+        //player.play()
 
         binding2.ivPlay.setOnClickListener {
             player.play()
