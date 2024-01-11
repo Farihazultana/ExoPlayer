@@ -2,21 +2,24 @@ package com.example.exoplayer
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.example.exoplayer.databinding.ActivityMediaPlayerActvityBinding
+import com.example.exoplayer.databinding.CustomExoLayoutBinding
 
 class MediaPlayerActvity : AppCompatActivity() {
-    lateinit var binding: ActivityMediaPlayerActvityBinding
-    lateinit var player: ExoPlayer
+    private lateinit var binding: ActivityMediaPlayerActvityBinding
+    private lateinit var binding2: CustomExoLayoutBinding
+    private lateinit var player: ExoPlayer
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMediaPlayerActvityBinding.inflate(layoutInflater)
-
-        setContentView(binding.root)
+        binding2 = CustomExoLayoutBinding.inflate(layoutInflater)
+        setContentView(binding2.root)
 
 
         val url1 = intent.getStringExtra("url1")
@@ -46,10 +49,34 @@ class MediaPlayerActvity : AppCompatActivity() {
         player.addMediaItem(firstItem)
         player.addMediaItem(secondItem)
         player.addMediaItem(thirdItem)
+
         // Prepare the player.
         player.prepare()
         // Start the playback.
         player.play()
+
+        binding2.ivPlay.setOnClickListener {
+            player.play()
+            binding2.ivPlay.visibility = View.GONE
+            binding2.ivPause.visibility = View.VISIBLE
+        }
+
+        binding2.ivPause.setOnClickListener {
+            player.pause()
+            binding2.ivPlay.visibility = View.VISIBLE
+            binding2.ivPause.visibility = View.GONE
+        }
+
+        binding2.ivPlayNext.setOnClickListener {
+            player.seekForward()
+        }
+        binding2.ivPlayNext.setOnClickListener {
+            player.seekBack()
+        }
+
+        binding2.ivShuffle.setOnClickListener {
+            player.shuffleModeEnabled = true
+        }
 
     }
 }
