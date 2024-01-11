@@ -29,7 +29,8 @@ class MainActivity : AppCompatActivity() {
             }*/
 
             val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
-            val url2 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+            val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
+            //val url2 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
             val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
 
             goToPlayerPage(url1, url2, url3)

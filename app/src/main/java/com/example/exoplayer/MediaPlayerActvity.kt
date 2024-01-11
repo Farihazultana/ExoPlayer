@@ -4,10 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
-import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.example.exoplayer.databinding.ActivityMediaPlayerActvityBinding
 import com.example.exoplayer.databinding.CustomExoLayoutBinding
 
@@ -68,10 +65,10 @@ class MediaPlayerActvity : AppCompatActivity() {
         }
 
         binding2.ivPlayNext.setOnClickListener {
-            player.seekForward()
+            player.seekToNextMediaItem()
         }
-        binding2.ivPlayNext.setOnClickListener {
-            player.seekBack()
+        binding2.ivPlayPrev.setOnClickListener {
+            player.seekToPreviousMediaItem()
         }
 
         binding2.ivShuffle.setOnClickListener {
