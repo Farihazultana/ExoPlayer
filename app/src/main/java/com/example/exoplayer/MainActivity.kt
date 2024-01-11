@@ -7,7 +7,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.example.exoplayer.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-    lateinit var binding: ActivityMainBinding
+    private var isMediaPlayerServiceRunning = false
+    private lateinit var binding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -16,29 +17,44 @@ class MainActivity : AppCompatActivity() {
         val player = ExoPlayer.Builder(this).build()
 
         binding.btn1.setOnClickListener {
-            val url =
-                "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+            /*if (!isMediaPlayerServiceRunning){
+                val url =
+                    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
 
-            goToPlayerPage(url)
+                val intent = Intent(this, MediaPlayerService::class.java)
+                intent.putExtra("url", url)
+
+                startActivity(intent)
+                isMediaPlayerServiceRunning = true
+            }*/
+
+            val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+            val url2 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+            val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
+
+            goToPlayerPage(url1, url2, url3)
+
         }
 
         binding.btn2.setOnClickListener {
             val url = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
 
-            goToPlayerPage(url)
+            //goToPlayerPage(url)
         }
 
         binding.btn3.setOnClickListener {
             val url = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
 
-            goToPlayerPage(url)
+            //goToPlayerPage(url)
         }
 
     }
 
-    private fun goToPlayerPage(url:String){
+    private fun goToPlayerPage(url1:String, url2: String, url3: String){
         val intent = Intent(this, MediaPlayerActvity::class.java)
-        intent.putExtra("url", url)
+        intent.putExtra("url1", url1)
+        intent.putExtra("url2", url2)
+        intent.putExtra("url3", url3)
 
         startActivity(intent)
     }
