@@ -1,18 +1,26 @@
 package com.example.exoplayer
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.SeekBar
+import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.appcompat.app.AlertDialog
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.exoplayer.databinding.ActivityMediaPlayerActvityBinding
 import com.example.exoplayer.databinding.CustomExoLayoutBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.util.Locale
 
 class MediaPlayerActvity : AppCompatActivity() {
     private lateinit var binding: ActivityMediaPlayerActvityBinding
@@ -88,6 +96,21 @@ class MediaPlayerActvity : AppCompatActivity() {
             }
         })
 
+        val audioTrack = ArrayList<String>()
+        val audioList = ArrayList<String>()
+
+
+        // Inside onTracksChanged function
+        binding2.ivShuffle.setOnClickListener {
+            trackSelector()
+        }
+
+
+
+
+
+
+
 
         binding2.ivPlay.setOnClickListener {
             player.play()
@@ -114,6 +137,78 @@ class MediaPlayerActvity : AppCompatActivity() {
 
     }
 
+    private fun trackSelector() {
+        player.addListener(
+            object : Player.Listener {
+                override fun onTracksChanged(tracks: Tracks) {
+                    val audioList = mutableListOf<String>()
+                    var language: String = ""
+                    for (trackGroup in tracks.groups) {
+                        val trackType = trackGroup.type
+
+                        if (trackType == C.TRACK_TYPE_AUDIO) {
+                            for (i in 0 until trackGroup.length) {
+                                val trackFormat = trackGroup.getTrackFormat(i)
+                                language =
+                                    trackFormat.language ?: "und"
+
+                                audioList.add("${audioList.size + 1}. " + Locale(language).displayLanguage)
+                            }
+                        }
+                    }
+
+                    if (audioList.isEmpty()) {
+                        // No audio tracks available
+                        return
+                    }
+
+                    if (audioList[0].contains("null")) {
+                        audioList[0] = "1. Default Tracks"
+                    }
+
+                    val tempTracks = audioList.toTypedArray()
+
+                    val audioDialog = MaterialAlertDialogBuilder(
+                        this@MediaPlayerActvity,
+                        R.style.Base_Theme_ExoPlayer
+                    )
+                        .setTitle("Select Language")
+                        .setOnCancelListener { player.play() }
+                        .setPositiveButton("Off Audio") { self, _ ->
+                            // Handle turning off audio if needed
+                            player.trackSelectionParameters =
+                                player.trackSelectionParameters
+                                    .buildUpon()
+                                    .setMaxVideoSizeSd()
+                                    .build()
+                            self.dismiss()
+                        }
+                        .setItems(tempTracks) { _, position ->
+                            // Handle selecting audio track
+                            Toast.makeText(
+                                this@MediaPlayerActvity,
+                                audioList[position] + " Selected",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            val selectedLanguage = Locale(language).language
+                            player.trackSelectionParameters =
+                                player.trackSelectionParameters
+                                    .buildUpon()
+                                    .setMaxVideoSizeSd()
+                                    .setPreferredAudioLanguage(selectedLanguage)
+                                    .build()
+                        }
+                        .create()
+
+                    audioDialog.show()
+                    audioDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.GREEN)
+                    audioDialog.window?.setBackgroundDrawable(ColorDrawable(0x99000000.toInt()))
+                }
+            }
+        )
+    }
+
     private fun updateProgressBar() {
         if (player.playbackState == Player.STATE_READY) {
             val currentPosition = player.currentPosition
@@ -136,7 +231,6 @@ class MediaPlayerActvity : AppCompatActivity() {
     }
 
 
-
     override fun onStart() {
         super.onStart()
         handler.post(updateProgressTask)
@@ -146,5 +240,6 @@ class MediaPlayerActvity : AppCompatActivity() {
         super.onStop()
         handler.removeCallbacks(updateProgressTask)
     }
+
 
 }
