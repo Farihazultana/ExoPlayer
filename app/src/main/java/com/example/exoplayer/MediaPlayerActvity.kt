@@ -2,7 +2,10 @@ package com.example.exoplayer
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
+import android.widget.SeekBar
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -15,7 +18,18 @@ class MediaPlayerActvity : AppCompatActivity() {
     private lateinit var binding: ActivityMediaPlayerActvityBinding
     private lateinit var binding2: CustomExoLayoutBinding
     private lateinit var player: ExoPlayer
-    @OptIn(UnstableApi::class) override fun onCreate(savedInstanceState: Bundle?) {
+
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateProgressTask: Runnable = object : Runnable {
+        override fun run() {
+            updateProgressBar()
+            handler.postDelayed(this, PROGRESS_UPDATE_INTERVAL)
+        }
+    }
+    private val PROGRESS_UPDATE_INTERVAL = 1000L
+
+    @OptIn(UnstableApi::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMediaPlayerActvityBinding.inflate(layoutInflater)
         binding2 = CustomExoLayoutBinding.inflate(layoutInflater)
@@ -51,34 +65,33 @@ class MediaPlayerActvity : AppCompatActivity() {
         player.addMediaItem(thirdItem)
 
 
-
         // Prepare the player.
         player.prepare()
-        // Start the playback.
-        //player.play()
 
         // SeekBar
-        player.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY) {
-                    val duration = player.duration
-                    val scaledValue = duration / 1000f
-                    binding2.seekBar.value = 0f
-                    binding2.seekBar.valueFrom = 0f
-                    binding2.seekBar.valueTo = scaledValue
+        if (player.playbackState == Player.STATE_READY) {
+            val duration = player.duration
+            val scaledValue = 0f
+            binding2.seekBar.progress = scaledValue.toInt()
+            binding2.seekBarStart.text = String.format("%.2f", scaledValue)
+            binding2.seekbarEnd.text = String.format("%.2f", duration / 1000f)
+        }
 
-
-                    binding2.seekBarStart.text = "0.00f"
-                    binding2.seekbarEnd.text = scaledValue.toString()
-
+        binding2.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    val seekTo = (progress * 1000L)
+                    player.seekTo(seekTo)
                 }
             }
 
-            override fun onPositionDiscontinuity(reason: Int) {
-                val currentPosition = player.currentPosition
-                binding2.seekBar.value = currentPosition / 1000f
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                handler.removeCallbacks(updateProgressTask)
             }
 
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                handler.post(updateProgressTask)
+            }
         })
 
 
@@ -106,4 +119,27 @@ class MediaPlayerActvity : AppCompatActivity() {
         }
 
     }
+
+    private fun updateProgressBar() {
+        if (player.playbackState == Player.STATE_READY) {
+            val currentPosition = player.currentPosition
+            val duration = player.duration
+            val scaledValue = currentPosition / 1000f
+            binding2.seekBar.progress = scaledValue.toInt()
+            binding2.seekBarStart.text = String.format("%.2f", scaledValue)
+            binding2.seekbarEnd.text = String.format("%.2f", duration / 1000f)
+        }
+    }
+
+
+    override fun onStart() {
+        super.onStart()
+        handler.post(updateProgressTask)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        handler.removeCallbacks(updateProgressTask)
+    }
+
 }

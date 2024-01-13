@@ -50,7 +50,7 @@
         </androidx.media3.ui.PlayerView>
 
 
-        <com.google.android.material.slider.Slider
+        <SeekBar
             android:id="@+id/seekBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
