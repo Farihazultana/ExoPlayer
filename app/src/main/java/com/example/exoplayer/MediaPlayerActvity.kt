@@ -69,13 +69,7 @@ class MediaPlayerActvity : AppCompatActivity() {
         player.prepare()
 
         // SeekBar
-        if (player.playbackState == Player.STATE_READY) {
-            val duration = player.duration
-            val scaledValue = 0f
-            binding2.seekBar.progress = scaledValue.toInt()
-            binding2.seekBarStart.text = String.format("%.2f", scaledValue)
-            binding2.seekbarEnd.text = String.format("%.2f", duration / 1000f)
-        }
+        updateProgressBar()
 
         binding2.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -124,12 +118,23 @@ class MediaPlayerActvity : AppCompatActivity() {
         if (player.playbackState == Player.STATE_READY) {
             val currentPosition = player.currentPosition
             val duration = player.duration
-            val scaledValue = currentPosition / 1000f
-            binding2.seekBar.progress = scaledValue.toInt()
-            binding2.seekBarStart.text = String.format("%.2f", scaledValue)
-            binding2.seekbarEnd.text = String.format("%.2f", duration / 1000f)
+
+            // Calculate minutes and seconds for current position
+            val currentMinutes = currentPosition / 1000 / 60
+            val currentSeconds = (currentPosition / 1000) % 60
+
+            // Calculate minutes and seconds for total duration
+            val totalMinutes = duration / 1000 / 60
+            val totalSeconds = (duration / 1000) % 60
+
+            // Update UI elements
+            binding2.seekBar.progress = currentPosition.toInt()
+            binding2.seekBar.max = duration.toInt()
+            binding2.seekBarStart.text = String.format("%02d:%02d", currentMinutes, currentSeconds)
+            binding2.seekbarEnd.text = String.format("%02d:%02d", totalMinutes, totalSeconds)
         }
     }
+
 
 
     override fun onStart() {
