@@ -74,8 +74,8 @@ class MediaPlayerActvity : AppCompatActivity() {
         binding2.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    val seekTo = (progress * 1000L)
-                    player.seekTo(seekTo)
+                    val seekTo = (progress)
+                    player.seekTo(seekTo.toLong())
                 }
             }
 
