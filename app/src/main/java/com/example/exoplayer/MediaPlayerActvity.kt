@@ -107,11 +107,6 @@ class MediaPlayerActvity : AppCompatActivity() {
 
 
 
-
-
-
-
-
         binding2.ivPlay.setOnClickListener {
             player.play()
             binding2.ivPlay.visibility = View.GONE

@@ -3,7 +3,6 @@ package com.example.exoplayer
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.support.v4.os.IResultReceiver2.Default
 import androidx.media3.common.MediaItem
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
