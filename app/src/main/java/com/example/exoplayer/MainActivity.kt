@@ -1,6 +1,7 @@
 package com.example.exoplayer
 
 import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.media3.exoplayer.ExoPlayer
@@ -14,7 +15,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val player = ExoPlayer.Builder(this).build()
+        val intent = Intent(this, MusicPlayerService::class.java)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            stopService(intent)
+        }
 
         binding.btn1.setOnClickListener {
             /*if (!isMediaPlayerServiceRunning){
