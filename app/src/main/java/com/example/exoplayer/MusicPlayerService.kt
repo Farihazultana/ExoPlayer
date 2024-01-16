@@ -5,7 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat
@@ -22,6 +25,16 @@ class MusicPlayerService : Service() {
     private lateinit var binding: CustomExoLayoutBinding
     private lateinit var mediaSession: MediaSessionCompat
 
+    private val broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                "Previous" -> player.seekToPrevious()
+                "Pause" -> player.playWhenReady = false
+                "Next" -> player.seekToNext()
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
 
@@ -32,6 +45,13 @@ class MusicPlayerService : Service() {
                     MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
         )
         mediaSession.setCallback(MediaSessionCallback())
+
+        val filter = IntentFilter().apply {
+            addAction("Previous")
+            addAction("Pause")
+            addAction("Next")
+        }
+        registerReceiver(broadcastReceiver, filter)
     }
 
     private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
@@ -80,8 +100,6 @@ class MusicPlayerService : Service() {
         return START_NOT_STICKY
     }
 
-
-
     private fun initializePlayer(intent: Intent?) {
         releasePlayer()
         val layoutInflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -111,6 +129,7 @@ class MusicPlayerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterReceiver(broadcastReceiver)
         releasePlayer()
     }
 
