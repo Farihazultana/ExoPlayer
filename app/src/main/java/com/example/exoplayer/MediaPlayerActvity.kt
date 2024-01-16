@@ -28,6 +28,7 @@ class MediaPlayerActvity : AppCompatActivity() {
 
     private lateinit var binding2: CustomExoLayoutBinding
     private lateinit var player: ExoPlayer
+    private var intent = Intent()
 
     private val handler = Handler(Looper.getMainLooper())
     private val updateProgressTask: Runnable = object : Runnable {
@@ -48,6 +49,7 @@ class MediaPlayerActvity : AppCompatActivity() {
         player = ExoPlayer.Builder(this).build()
         binding2.playerView.player = player
 
+        intent = Intent(this, MusicPlayerService::class.java)
 
         val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
         val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
@@ -114,7 +116,8 @@ class MediaPlayerActvity : AppCompatActivity() {
             player.play()
             binding2.ivPlay.visibility = View.GONE
             binding2.ivPause.visibility = View.VISIBLE
-            val intent = Intent(this, MusicPlayerService::class.java)
+
+            //notification
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(intent)
@@ -127,6 +130,9 @@ class MediaPlayerActvity : AppCompatActivity() {
             player.pause()
             binding2.ivPlay.visibility = View.VISIBLE
             binding2.ivPause.visibility = View.GONE
+
+            //stopService(intent)
+
         }
 
         binding2.ivPlayNext.setOnClickListener {

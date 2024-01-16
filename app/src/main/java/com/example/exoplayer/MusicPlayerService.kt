@@ -87,12 +87,6 @@ class MusicPlayerService : Service() {
             initializePlayer(intent)
         }
 
-        when (intent?.action) {
-            "Previous" -> player.seekToPrevious()
-            "Pause" -> player.playWhenReady = false
-            "Next" -> player.seekToNext()
-        }
-
         createNotificationChannel()
         val notification = createNotification()
         startForeground(1, notification)
@@ -182,6 +176,7 @@ class MusicPlayerService : Service() {
     private fun getPendingIntent(action: String): PendingIntent {
         val intent = Intent(this, NotificationController::class.java)
         intent.action = action
+
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
     }
 }
