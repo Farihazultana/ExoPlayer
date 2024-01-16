@@ -20,12 +20,7 @@
         android:theme="@style/Theme.ExoPlayer"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
-        <activity
-            android:name=".NotificationController"
-            android:exported="false" />
-        <activity
-            android:name=".MediaPlayerActivity"
-            android:exported="false" />
+
         <activity
             android:name=".MediaPlayerActvity"
             android:exported="false"
