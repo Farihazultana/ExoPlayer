@@ -3,7 +3,9 @@ package com.example.exoplayer
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
@@ -28,7 +30,7 @@ class MediaPlayerService : Service(){
         return START_STICKY
     }
 
-    private fun playMedia(mediaUrl: String){
+    @OptIn(UnstableApi::class) private fun playMedia(mediaUrl: String){
         releasePlayer()
         player = ExoPlayer.Builder(this)
             .setTrackSelector(DefaultTrackSelector(this))

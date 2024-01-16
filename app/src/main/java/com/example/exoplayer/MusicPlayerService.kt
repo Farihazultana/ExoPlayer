@@ -8,6 +8,8 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import android.view.LayoutInflater
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
@@ -18,10 +20,57 @@ class MusicPlayerService : Service() {
     private val CHANNEL_ID = "Music Service Channel ID"
     private lateinit var player: ExoPlayer
     private lateinit var binding: CustomExoLayoutBinding
+    private lateinit var mediaSession: MediaSessionCompat
+
+    override fun onCreate() {
+        super.onCreate()
+
+        mediaSession = MediaSessionCompat(this, "MusicPlayerService")
+
+        mediaSession.setFlags(
+            MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
+                    MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+        )
+        mediaSession.setCallback(MediaSessionCallback())
+    }
+
+    private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
+        override fun onPlay() {
+            player.play()
+            mediaSession.setPlaybackState(
+                PlaybackStateCompat.Builder()
+                    .setState(PlaybackStateCompat.STATE_PLAYING, player.currentPosition, 1.0f)
+                    .build()
+            )
+        }
+
+        override fun onPause() {
+            player.pause()
+            mediaSession.setPlaybackState(
+                PlaybackStateCompat.Builder()
+                    .setState(PlaybackStateCompat.STATE_PAUSED, player.currentPosition, 1.0f)
+                    .build()
+            )
+        }
+
+        override fun onSkipToNext() {
+            player.seekToNext()
+        }
+
+        override fun onSkipToPrevious() {
+            player.seekToPrevious()
+        }
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!this::player.isInitialized) {
             initializePlayer(intent)
+        }
+
+        when (intent?.action) {
+            "Previous" -> player.seekToPrevious()
+            "Pause" -> player.playWhenReady = false
+            "Next" -> player.seekToNext()
         }
 
         createNotificationChannel()
@@ -40,9 +89,9 @@ class MusicPlayerService : Service() {
         player = ExoPlayer.Builder(this).build()
         binding.playerView.player = player
 
-        val url1 = intent?.getStringExtra("url1") ?: ""
-        val url2 = intent?.getStringExtra("url2") ?: ""
-        val url3 = intent?.getStringExtra("url3") ?: ""
+        val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+        val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
+        val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
 
         val firstItem = MediaItem.fromUri(url1)
         val secondItem = MediaItem.fromUri(url2)
@@ -92,12 +141,28 @@ class MusicPlayerService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
+
+        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
+            .setMediaSession(mediaSession.sessionToken)
+            .setShowActionsInCompactView(0, 1, 2) // Index of playback controls (play, pause, stop)
+
+
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Music Player")
             .setContentText("Playing music")
             .setSmallIcon(R.drawable.ic_music)
             .setContentIntent(pendingIntent)
+            .setStyle(mediaStyle)
+            .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent("Previous"))
+            .addAction(R.drawable.ic_pause, "Pause", getPendingIntent("Pause"))
+            .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
 
         return notificationBuilder.build()
+    }
+
+    private fun getPendingIntent(action: String): PendingIntent {
+        val intent = Intent(this, NotificationController::class.java)
+        intent.action = action
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
     }
 }
