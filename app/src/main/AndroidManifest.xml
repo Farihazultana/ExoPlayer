@@ -49,7 +49,19 @@
         -->
         <service
             android:name=".MusicPlayerService"
+            android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+        <receiver
+            android:name=".NotificationController"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="Previous" />
+                <action android:name="Pause" />
+                <action android:name="Next" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

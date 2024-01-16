@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import android.view.LayoutInflater
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
@@ -176,6 +177,12 @@ class MusicPlayerService : Service() {
     private fun getPendingIntent(action: String): PendingIntent {
         val intent = Intent(this, NotificationController::class.java)
         intent.action = action
+
+        when (intent?.action) {
+            "Previous" -> Log.i("Noti", "getPendingIntent: Play Previous")
+            "Pause" -> Log.i("Noti", "getPendingIntent: Pause")
+            "Next" -> Log.i("Noti", "getPendingIntent: Next")
+        }
 
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
     }
