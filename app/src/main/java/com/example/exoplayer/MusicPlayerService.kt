@@ -26,7 +26,7 @@ class MusicPlayerService : Service() {
     private lateinit var binding: CustomExoLayoutBinding
     private lateinit var mediaSession: MediaSessionCompat
 
-    private val broadcastReceiver = object : BroadcastReceiver() {
+    /*private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 "Previous" -> player.seekToPrevious()
@@ -34,28 +34,28 @@ class MusicPlayerService : Service() {
                 "Next" -> player.seekToNext()
             }
         }
-    }
+    }*/
 
     override fun onCreate() {
         super.onCreate()
 
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
-        mediaSession.setFlags(
+        /*mediaSession.setFlags(
             MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
                     MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
         )
-        mediaSession.setCallback(MediaSessionCallback())
+        mediaSession.setCallback(MediaSessionCallback())*/
 
-        val filter = IntentFilter().apply {
+        /*val filter = IntentFilter().apply {
             addAction("Previous")
             addAction("Pause")
             addAction("Next")
         }
-        registerReceiver(broadcastReceiver, filter)
+        registerReceiver(, filter)*/
     }
 
-    private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
+    /*private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
         override fun onPlay() {
             player.play()
             mediaSession.setPlaybackState(
@@ -81,7 +81,7 @@ class MusicPlayerService : Service() {
         override fun onSkipToPrevious() {
             player.seekToPrevious()
         }
-    }
+    }*/
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!this::player.isInitialized) {
@@ -124,7 +124,7 @@ class MusicPlayerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(broadcastReceiver)
+        //unregisterReceiver(broadcastReceiver)
         releasePlayer()
     }
 
@@ -178,12 +178,13 @@ class MusicPlayerService : Service() {
         val intent = Intent(this, NotificationController::class.java)
         intent.action = action
 
-        when (intent?.action) {
+        /*when (intent?.action) {
             "Previous" -> Log.i("Noti", "getPendingIntent: Play Previous")
             "Pause" -> Log.i("Noti", "getPendingIntent: Pause")
             "Next" -> Log.i("Noti", "getPendingIntent: Next")
-        }
+        }*/
 
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
     }
+
 }
