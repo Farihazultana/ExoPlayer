@@ -49,11 +49,15 @@
         <receiver
             android:name=".NotificationController"
             android:enabled="true"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="Previous" />
                 <action android:name="Pause" />
                 <action android:name="Next" />
+                <category android:name="com.example.exoplayer" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
 

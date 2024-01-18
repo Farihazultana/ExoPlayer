@@ -1,30 +1,39 @@
 package com.example.exoplayer
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.example.exoplayer.databinding.ActivityMediaPlayerActvityBinding
+import androidx.media3.ui.PlayerNotificationManager.ACTION_NEXT
+import androidx.media3.ui.PlayerNotificationManager.ACTION_PLAY
+import androidx.media3.ui.PlayerNotificationManager.ACTION_PREVIOUS
 import com.example.exoplayer.databinding.CustomExoLayoutBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Locale
 
+
 class MediaPlayerActvity : AppCompatActivity() {
+    val receiver: NotificationController = NotificationController()
 
     private lateinit var binding2: CustomExoLayoutBinding
     private lateinit var player: ExoPlayer
@@ -38,6 +47,29 @@ class MediaPlayerActvity : AppCompatActivity() {
         }
     }
     private val PROGRESS_UPDATE_INTERVAL = 1000L
+
+    private val broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val action = intent?.action
+            val message = intent?.getStringExtra("action")
+
+            when (action) {
+                "Pause" -> {
+                    Toast.makeText(
+                        context,
+                        "Pause action received with message: $message",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    Log.i("Action", "onReceive: $message")
+                }
+
+                else -> {
+                    Log.i("Action", "onReceive: $message")
+                }
+
+            }
+        }
+    }
 
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +87,13 @@ class MediaPlayerActvity : AppCompatActivity() {
         val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
         val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
 
+        val filter = IntentFilter().apply {
+            addAction("Previous")
+            addAction("Pause")
+            addAction("Next")
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, filter)
 
         /*val mediaItem =
             MediaItem.Builder().setUri(url).setMimeType(MimeTypes.APPLICATION_MP4).build()
@@ -106,9 +145,9 @@ class MediaPlayerActvity : AppCompatActivity() {
         val audioList = ArrayList<String>()
 
 
-        // Inside onTracksChanged function
+
         binding2.ivShuffle.setOnClickListener {
-            trackSelector()
+
         }
 
 
@@ -250,6 +289,11 @@ class MediaPlayerActvity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         handler.removeCallbacks(updateProgressTask)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(broadcastReceiver)
     }
 
 

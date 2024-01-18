@@ -26,62 +26,12 @@ class MusicPlayerService : Service() {
     private lateinit var binding: CustomExoLayoutBinding
     private lateinit var mediaSession: MediaSessionCompat
 
-    /*private val broadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                "Previous" -> player.seekToPrevious()
-                "Pause" -> player.playWhenReady = false
-                "Next" -> player.seekToNext()
-            }
-        }
-    }*/
-
     override fun onCreate() {
         super.onCreate()
 
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
-        /*mediaSession.setFlags(
-            MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
-                    MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
-        )
-        mediaSession.setCallback(MediaSessionCallback())*/
-
-        /*val filter = IntentFilter().apply {
-            addAction("Previous")
-            addAction("Pause")
-            addAction("Next")
-        }
-        registerReceiver(, filter)*/
     }
-
-    /*private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
-        override fun onPlay() {
-            player.play()
-            mediaSession.setPlaybackState(
-                PlaybackStateCompat.Builder()
-                    .setState(PlaybackStateCompat.STATE_PLAYING, player.currentPosition, 1.0f)
-                    .build()
-            )
-        }
-
-        override fun onPause() {
-            player.pause()
-            mediaSession.setPlaybackState(
-                PlaybackStateCompat.Builder()
-                    .setState(PlaybackStateCompat.STATE_PAUSED, player.currentPosition, 1.0f)
-                    .build()
-            )
-        }
-
-        override fun onSkipToNext() {
-            player.seekToNext()
-        }
-
-        override fun onSkipToPrevious() {
-            player.seekToPrevious()
-        }
-    }*/
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!this::player.isInitialized) {
@@ -148,6 +98,7 @@ class MusicPlayerService : Service() {
 
     private fun createNotification(): Notification {
         val intent = Intent(this, MediaPlayerActvity::class.java)
+        intent.putExtra("action", "Pause")
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             this,
             0,
@@ -178,13 +129,7 @@ class MusicPlayerService : Service() {
         val intent = Intent(this, NotificationController::class.java)
         intent.action = action
 
-        /*when (intent?.action) {
-            "Previous" -> Log.i("Noti", "getPendingIntent: Play Previous")
-            "Pause" -> Log.i("Noti", "getPendingIntent: Pause")
-            "Next" -> Log.i("Noti", "getPendingIntent: Next")
-        }*/
-
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
     }
 
 }
