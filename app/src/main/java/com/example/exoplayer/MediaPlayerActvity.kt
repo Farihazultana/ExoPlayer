@@ -33,7 +33,8 @@ import java.util.Locale
 
 
 class MediaPlayerActvity : AppCompatActivity() {
-    val receiver: NotificationController = NotificationController()
+
+    val notificationReceiver: NotificationController = NotificationController()
 
     private lateinit var binding2: CustomExoLayoutBinding
     private lateinit var player: ExoPlayer
@@ -48,7 +49,7 @@ class MediaPlayerActvity : AppCompatActivity() {
     }
     private val PROGRESS_UPDATE_INTERVAL = 1000L
 
-    private val broadcastReceiver = object : BroadcastReceiver() {
+    /*private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.action
             val message = intent?.getStringExtra("action")
@@ -69,6 +70,27 @@ class MediaPlayerActvity : AppCompatActivity() {
 
             }
         }
+    }*/
+
+    object ExoPlayerSingleton {
+        var player: ExoPlayer? = null
+
+        fun setExoPlayerInstance(exoPlayer: ExoPlayer) {
+            player = exoPlayer
+        }
+
+        fun getExoPlayerInstance(): ExoPlayer? {
+            return player
+        }
+    }
+    private fun startMusicPlayerService() {
+        intent = Intent(this, MusicPlayerService::class.java)
+        //intent.putExtra("exoPlayer", player)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            stopService(intent)
+        }
     }
 
     @OptIn(UnstableApi::class)
@@ -79,113 +101,69 @@ class MediaPlayerActvity : AppCompatActivity() {
 
         // Initialize player after setting content view
         player = ExoPlayer.Builder(this).build()
-        binding2.playerView.player = player
 
-        intent = Intent(this, MusicPlayerService::class.java)
+        // Set player in singleton class
+        ExoPlayerSingleton.setExoPlayerInstance(player)
+
+        startMusicPlayerService()
 
         val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
         val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
         val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
 
-        val filter = IntentFilter().apply {
-            addAction("Previous")
-            addAction("Pause")
-            addAction("Next")
-        }
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, filter)
-
-        /*val mediaItem =
-            MediaItem.Builder().setUri(url).setMimeType(MimeTypes.APPLICATION_MP4).build()
-
-        val mediaSystem = ProgressiveMediaSource.Factory(DefaultDataSource.Factory(this))
-            .createMediaSource(mediaItem)
-
-        player.setMediaItem(mediaItem)
-        player.prepare()
-        player.play()*/
-
-        // Build the media item.
-        //val mediaItem = MediaItem.fromUri(url!!)
         val firstItem = MediaItem.fromUri(url1!!)
         val secondItem = MediaItem.fromUri(url2!!)
         val thirdItem = MediaItem.fromUri(url3!!)
 
         // Set the media item to be played.
-        //player.setMediaItem(mediaItem)
-        player.addMediaItem(firstItem)
-        player.addMediaItem(secondItem)
-        player.addMediaItem(thirdItem)
-
+        ExoPlayerSingleton.getExoPlayerInstance()?.addMediaItem(firstItem)
+        ExoPlayerSingleton.getExoPlayerInstance()?.addMediaItem(secondItem)
+        ExoPlayerSingleton.getExoPlayerInstance()?.addMediaItem(thirdItem)
 
         // Prepare the player.
-        player.prepare()
+        ExoPlayerSingleton.getExoPlayerInstance()?.prepare()
 
         // SeekBar
         updateProgressBar()
 
-        binding2.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    val seekTo = (progress)
-                    player.seekTo(seekTo.toLong())
-                }
-            }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                handler.removeCallbacks(updateProgressTask)
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                handler.post(updateProgressTask)
-            }
-        })
-
-        val audioTrack = ArrayList<String>()
-        val audioList = ArrayList<String>()
-
-
-
-        binding2.ivShuffle.setOnClickListener {
-
-        }
-
-
+        // Set up UI controls
         binding2.ivPlay.setOnClickListener {
-            player.play()
+            ExoPlayerSingleton.getExoPlayerInstance()?.play()
             binding2.ivPlay.visibility = View.GONE
             binding2.ivPause.visibility = View.VISIBLE
-
-            //notification
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            } else {
-                stopService(intent)
-            }
         }
 
         binding2.ivPause.setOnClickListener {
-            player.pause()
+            ExoPlayerSingleton.getExoPlayerInstance()?.pause()
             binding2.ivPlay.visibility = View.VISIBLE
             binding2.ivPause.visibility = View.GONE
-
-            //stopService(intent)
-
         }
 
         binding2.ivPlayNext.setOnClickListener {
-            player.seekToNextMediaItem()
+            ExoPlayerSingleton.getExoPlayerInstance()?.seekToNextMediaItem()
         }
+
         binding2.ivPlayPrev.setOnClickListener {
-            player.seekToPreviousMediaItem()
+            ExoPlayerSingleton.getExoPlayerInstance()?.seekToPreviousMediaItem()
         }
 
         binding2.ivShuffle.setOnClickListener {
-            player.shuffleModeEnabled = true
+            ExoPlayerSingleton.getExoPlayerInstance()?.shuffleModeEnabled = true
         }
 
+        val filter = IntentFilter().apply {
+            addAction("Pause")
+            addAction("Next")
+            addAction("Previous")
+        }
+
+        //LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, filter)
+
+        // Track selector
+        trackSelector()
     }
+
 
     private fun trackSelector() {
         player.addListener(
@@ -289,11 +267,13 @@ class MediaPlayerActvity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         handler.removeCallbacks(updateProgressTask)
+        unregisterReceiver(notificationReceiver)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(broadcastReceiver)
+        //unregisterReceiver(broadcastReceiver)
+        unregisterReceiver(notificationReceiver)
     }
 
 

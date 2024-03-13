@@ -15,12 +15,18 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.view.LayoutInflater
+import android.widget.Toast
+import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.exoplayer.databinding.CustomExoLayoutBinding
 
+@OptIn(UnstableApi::class)
 class MusicPlayerService : Service() {
+    val notificationReceiver: NotificationController = NotificationController()
     private val CHANNEL_ID = "Music Service Channel ID"
     private lateinit var player: ExoPlayer
     private lateinit var binding: CustomExoLayoutBinding
@@ -28,7 +34,12 @@ class MusicPlayerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
+        val filter = IntentFilter().apply {
+            addAction("Pause")
+            addAction("Next")
+            addAction("Previous")
+        }
+        registerReceiver(notificationReceiver, filter)
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
     }
@@ -41,6 +52,25 @@ class MusicPlayerService : Service() {
         createNotificationChannel()
         val notification = createNotification()
         startForeground(1, notification)
+
+        intent?.getStringExtra("action")?.let { action ->
+            when (action) {
+                "Previous" -> {
+                    Toast.makeText(this, "Play Previous", Toast.LENGTH_SHORT).show()
+                    player?.seekToPrevious()
+                }
+                "Pause" -> {
+                    Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
+                    player?.pause()
+                }
+                "Next" -> {
+                    Toast.makeText(this, "Play Next", Toast.LENGTH_SHORT).show()
+                    player?.seekToNext()
+                }
+
+                else -> {}
+            }
+        }
 
         return START_NOT_STICKY
     }
@@ -74,7 +104,7 @@ class MusicPlayerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        //unregisterReceiver(broadcastReceiver)
+        unregisterReceiver(notificationReceiver)
         releasePlayer()
     }
 
@@ -103,7 +133,7 @@ class MusicPlayerService : Service() {
             this,
             0,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_MUTABLE
         )
 
 
@@ -114,7 +144,7 @@ class MusicPlayerService : Service() {
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Music Player")
-            .setContentText("Playing music")
+            .setContentText("Playing Music")
             .setSmallIcon(R.drawable.ic_music)
             .setContentIntent(pendingIntent)
             .setStyle(mediaStyle)
@@ -125,11 +155,30 @@ class MusicPlayerService : Service() {
         return notificationBuilder.build()
     }
 
+    fun pausePlayer() {
+        if (this::player.isInitialized && player.playbackState == Player.STATE_READY) {
+            player.pause()
+        }
+    }
+
+    fun playNext() {
+        if (this::player.isInitialized && player.hasNext()) {
+            player.seekToNext()
+        }
+    }
+
+    fun playPrevious() {
+        if (this::player.isInitialized && player.hasPrevious()) {
+            player.seekToPrevious()
+        }
+    }
+
+
     private fun getPendingIntent(action: String): PendingIntent {
         val intent = Intent(this, NotificationController::class.java)
         intent.action = action
 
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE )
     }
 
 }
