@@ -57,7 +57,8 @@ class MusicPlayerService : Service() {
             when (action) {
                 "Previous" -> {
                     Toast.makeText(this, "Play Previous", Toast.LENGTH_SHORT).show()
-                    player?.seekToPrevious()
+                    player?.seekToPreviousMediaItem()
+                    player.play()
                 }
                 "Pause" -> {
                     Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
@@ -65,7 +66,8 @@ class MusicPlayerService : Service() {
                 }
                 "Next" -> {
                     Toast.makeText(this, "Play Next", Toast.LENGTH_SHORT).show()
-                    player?.seekToNext()
+                    player?.seekToNextMediaItem()
+                    player.play()
                 }
 
                 else -> {}
