@@ -9,8 +9,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.IInterface
+import android.os.Parcel
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
@@ -23,14 +26,20 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.exoplayer.databinding.CustomExoLayoutBinding
+import java.io.FileDescriptor
 
 @OptIn(UnstableApi::class)
-class MusicPlayerService : Service() {
+class MusicPlayerService : Service(), IBinder {
     val notificationReceiver: NotificationController = NotificationController()
     private val CHANNEL_ID = "Music Service Channel ID"
-    private lateinit var player: ExoPlayer
+
     private lateinit var binding: CustomExoLayoutBinding
     private lateinit var mediaSession: MediaSessionCompat
+
+    private val binder = MusicPlayerBinder()
+    inner class MusicPlayerBinder : Binder() {
+        fun getService(): MusicPlayerService = this@MusicPlayerService
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -42,12 +51,14 @@ class MusicPlayerService : Service() {
         registerReceiver(notificationReceiver, filter)
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
+        //initializePlayer()
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!this::player.isInitialized) {
-            initializePlayer(intent)
-        }
+        /*if (!this::player.isInitialized) {
+            initializePlayer()
+        }*/
 
         createNotificationChannel()
         val notification = createNotification()
@@ -57,17 +68,17 @@ class MusicPlayerService : Service() {
             when (action) {
                 "Previous" -> {
                     Toast.makeText(this, "Play Previous", Toast.LENGTH_SHORT).show()
-                    player?.seekToPreviousMediaItem()
-                    player.play()
+                    onPlayAction.previousMusic()
+                    //player.play()
                 }
                 "Pause" -> {
                     Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
-                    player?.pause()
+                    onPlayAction.pauseMusic()
                 }
                 "Next" -> {
                     Toast.makeText(this, "Play Next", Toast.LENGTH_SHORT).show()
-                    player?.seekToNextMediaItem()
-                    player.play()
+                    onPlayAction.nextMusic()
+                    //player.play()
                 }
 
                 else -> {}
@@ -77,44 +88,22 @@ class MusicPlayerService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun initializePlayer(intent: Intent?) {
-        releasePlayer()
-        val layoutInflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        binding = CustomExoLayoutBinding.inflate(layoutInflater)
-        player = ExoPlayer.Builder(this).build()
-        binding.playerView.player = player
-
-        val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
-        val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
-        val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
-
-        val firstItem = MediaItem.fromUri(url1)
-        val secondItem = MediaItem.fromUri(url2)
-        val thirdItem = MediaItem.fromUri(url3)
-
-        player.addMediaItem(firstItem)
-        player.addMediaItem(secondItem)
-        player.addMediaItem(thirdItem)
-
-        player.playWhenReady = true
-        player.prepare()
-    }
 
     override fun onBind(intent: Intent?): IBinder? {
-        return null
+        return binder
     }
 
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(notificationReceiver)
-        releasePlayer()
+        onPlayAction.releasePlayer()
     }
 
-    private fun releasePlayer() {
+    /*private fun releasePlayer() {
         if (this::player.isInitialized) {
             player.release()
         }
-    }
+    }*/
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -157,30 +146,56 @@ class MusicPlayerService : Service() {
         return notificationBuilder.build()
     }
 
-    fun pausePlayer() {
-        if (this::player.isInitialized && player.playbackState == Player.STATE_READY) {
-            player.pause()
-        }
-    }
-
-    fun playNext() {
-        if (this::player.isInitialized && player.hasNext()) {
-            player.seekToNext()
-        }
-    }
-
-    fun playPrevious() {
-        if (this::player.isInitialized && player.hasPrevious()) {
-            player.seekToPrevious()
-        }
-    }
-
-
     private fun getPendingIntent(action: String): PendingIntent {
         val intent = Intent(this, NotificationController::class.java)
         intent.action = action
 
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE )
     }
+
+    override fun getInterfaceDescriptor(): String? {
+        return null
+    }
+
+    override fun pingBinder(): Boolean {
+        return false
+    }
+
+    override fun isBinderAlive(): Boolean {
+        return false
+    }
+
+    override fun queryLocalInterface(descriptor: String): IInterface? {
+        return null
+    }
+
+    override fun dump(fd: FileDescriptor, args: Array<out String>?) {
+
+    }
+
+    override fun dumpAsync(fd: FileDescriptor, args: Array<out String>?) {
+
+    }
+
+    override fun transact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
+        return false
+    }
+
+    override fun linkToDeath(recipient: IBinder.DeathRecipient, flags: Int) {
+
+    }
+
+    override fun unlinkToDeath(recipient: IBinder.DeathRecipient, flags: Int): Boolean {
+        return false
+    }
+
+    companion object{
+        lateinit var onPlayAction: PlayAction
+
+        fun onPlayAction(setAction : PlayAction){
+            this.onPlayAction = setAction
+        }
+    }
+
 
 }
