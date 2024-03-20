@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun goToPlayerPage(){
-        val intent = Intent(this, MediaPlayerActvity::class.java)
+        val intent = Intent(this, MediaPlayerActivity::class.java)
         startActivity(intent)
     }
 

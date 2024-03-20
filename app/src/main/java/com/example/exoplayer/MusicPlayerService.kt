@@ -49,7 +49,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
         initializePlayer()
-        MediaPlayerActvity.onPlayAction(this)
+        MediaPlayerActivity.onPlayAction(this)
 
     }
 
@@ -105,7 +105,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     }
 
     private fun createNotification(): Notification {
-        val intent = Intent(this, MediaPlayerActvity::class.java)
+        val intent = Intent(this, MediaPlayerActivity::class.java)
         intent.putExtra("action", "Pause")
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             this,

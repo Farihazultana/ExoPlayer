@@ -11,9 +11,9 @@ import androidx.media3.common.util.UnstableApi
 import com.example.exoplayer.databinding.CustomExoLayoutBinding
 
 
-class MediaPlayerActvity : AppCompatActivity() {
+class MediaPlayerActivity : AppCompatActivity() {
 
-    val notificationReceiver: NotificationController = NotificationController()
+    private val notificationReceiver: NotificationController = NotificationController()
 
     private lateinit var binding: CustomExoLayoutBinding
 
