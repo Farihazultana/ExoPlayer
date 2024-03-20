@@ -5,8 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Binder
@@ -15,9 +13,6 @@ import android.os.IBinder
 import android.os.IInterface
 import android.os.Parcel
 import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
-import android.util.Log
-import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
@@ -25,18 +20,20 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.example.exoplayer.databinding.CustomExoLayoutBinding
 import java.io.FileDescriptor
 
 @OptIn(UnstableApi::class)
-class MusicPlayerService : Service(), IBinder {
-    val notificationReceiver: NotificationController = NotificationController()
+class MusicPlayerService : Service(), IBinder, PlayAction {
+    private val notificationReceiver: NotificationController = NotificationController()
     private val CHANNEL_ID = "Music Service Channel ID"
 
-    private lateinit var binding: CustomExoLayoutBinding
     private lateinit var mediaSession: MediaSessionCompat
 
     private val binder = MusicPlayerBinder()
+
+    private lateinit var player: ExoPlayer
+
+
     inner class MusicPlayerBinder : Binder() {
         fun getService(): MusicPlayerService = this@MusicPlayerService
     }
@@ -51,14 +48,12 @@ class MusicPlayerService : Service(), IBinder {
         registerReceiver(notificationReceiver, filter)
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
-        //initializePlayer()
+        initializePlayer()
+        MediaPlayerActvity.onPlayAction(this)
 
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        /*if (!this::player.isInitialized) {
-            initializePlayer()
-        }*/
 
         createNotificationChannel()
         val notification = createNotification()
@@ -68,17 +63,15 @@ class MusicPlayerService : Service(), IBinder {
             when (action) {
                 "Previous" -> {
                     Toast.makeText(this, "Play Previous", Toast.LENGTH_SHORT).show()
-                    onPlayAction.previousMusic()
-                    //player.play()
+                    previousMusic()
                 }
                 "Pause" -> {
                     Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
-                    onPlayAction.pauseMusic()
+                    pauseMusic()
                 }
                 "Next" -> {
                     Toast.makeText(this, "Play Next", Toast.LENGTH_SHORT).show()
-                    onPlayAction.nextMusic()
-                    //player.play()
+                    nextMusic()
                 }
 
                 else -> {}
@@ -96,14 +89,8 @@ class MusicPlayerService : Service(), IBinder {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(notificationReceiver)
-        onPlayAction.releasePlayer()
+        releasePlayer()
     }
-
-    /*private fun releasePlayer() {
-        if (this::player.isInitialized) {
-            player.release()
-        }
-    }*/
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -189,13 +176,142 @@ class MusicPlayerService : Service(), IBinder {
         return false
     }
 
-    companion object{
-        lateinit var onPlayAction: PlayAction
+    override fun playMusic() {
+        player.play()
+    }
 
-        fun onPlayAction(setAction : PlayAction){
-            this.onPlayAction = setAction
+    override fun pauseMusic() {
+        player.pause()
+    }
+
+    override fun previousMusic() {
+        player.seekToPreviousMediaItem()
+    }
+
+    override fun nextMusic() {
+        player.seekToNextMediaItem()
+    }
+
+    override fun shuffleMusic() {
+        player.shuffleModeEnabled = true
+    }
+
+    override fun playerCurrentPosition() : Long {
+        var currentPosition = 0L
+        if (player.playbackState == Player.STATE_READY) {
+            currentPosition = player.currentPosition
+        }
+        return currentPosition
+    }
+
+
+    override fun playerDuration() : Long{
+        var duration = 0L
+        if (player.playbackState == Player.STATE_READY) {
+            duration = player.duration
+        }
+        return duration
+    }
+
+    override fun releasePlayer() {
+        if (this::player.isInitialized) {
+            player.release()
         }
     }
 
+    override fun trackSelector() {
+        /*player.addListener(
+            object : Player.Listener {
+                override fun onTracksChanged(tracks: Tracks) {
+                    val audioList = mutableListOf<String>()
+                    var language: String = ""
+                    for (trackGroup in tracks.groups) {
+                        val trackType = trackGroup.type
+
+                        if (trackType == C.TRACK_TYPE_AUDIO) {
+                            for (i in 0 until trackGroup.length) {
+                                val trackFormat = trackGroup.getTrackFormat(i)
+                                language =
+                                    trackFormat.language ?: "und"
+
+                                audioList.add("${audioList.size + 1}. " + Locale(language).displayLanguage)
+                            }
+                        }
+                    }
+
+                    if (audioList.isEmpty()) {
+                        // No audio tracks available
+                        return
+                    }
+
+                    if (audioList[0].contains("null")) {
+                        audioList[0] = "1. Default Tracks"
+                    }
+
+                    val tempTracks = audioList.toTypedArray()
+
+                    val audioDialog = MaterialAlertDialogBuilder(
+                        this@MusicPlayerService,
+                        R.style.Base_Theme_ExoPlayer
+                    )
+                        .setTitle("Select Language")
+                        .setOnCancelListener { player.play() }
+                        .setPositiveButton("Off Audio") { self, _ ->
+                            // Handle turning off audio if needed
+                            player.trackSelectionParameters =
+                                player.trackSelectionParameters
+                                    .buildUpon()
+                                    .setMaxVideoSizeSd()
+                                    .build()
+                            self.dismiss()
+                        }
+                        .setItems(tempTracks) { _, position ->
+                            // Handle selecting audio track
+                            Toast.makeText(
+                                this@MusicPlayerService,
+                                audioList[position] + " Selected",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            val selectedLanguage = Locale(language).language
+                            player.trackSelectionParameters =
+                                player.trackSelectionParameters
+                                    .buildUpon()
+                                    .setMaxVideoSizeSd()
+                                    .setPreferredAudioLanguage(selectedLanguage)
+                                    .build()
+                        }
+                        .create()
+
+                    audioDialog.show()
+                    audioDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.GREEN)
+                    audioDialog.window?.setBackgroundDrawable(ColorDrawable(0x99000000.toInt()))
+                }
+            }
+        )*/
+    }
+
+    override fun initializePlayer() : ExoPlayer{
+        player = ExoPlayer.Builder(this).build()
+
+        val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+        val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
+        val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
+
+
+        val firstItem = MediaItem.fromUri(url1!!)
+        val secondItem = MediaItem.fromUri(url2!!)
+        val thirdItem = MediaItem.fromUri(url3!!)
+
+        // Set the media item to be played.
+        player.addMediaItem(firstItem)
+        player.addMediaItem(secondItem)
+        player.addMediaItem(thirdItem)
+
+        // Prepare the player.
+        player.prepare()
+
+        return player
+    }
 
 }

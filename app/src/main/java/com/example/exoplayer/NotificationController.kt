@@ -15,42 +15,6 @@ import javax.security.auth.login.LoginException
 class NotificationController : BroadcastReceiver() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onReceive(context: Context?, intent: Intent?) {
-        /*val player = MediaPlayerActvity.ExoPlayerSingleton.getExoPlayerInstance()
-        when (intent?.action) {
-            "Previous" -> {
-                Toast.makeText(context, "Play Previous", Toast.LENGTH_SHORT).show()
-                Log.i("Toast", "Play Previous ")
-                if (player != null) {
-                    if (player.playbackState == Player.STATE_READY) {
-                        player?.seekToPrevious()
-                    }
-                }
-
-            }
-
-            "Pause" -> {
-                Toast.makeText(context, "Pause", Toast.LENGTH_SHORT).show()
-                Log.i("Toast", "Pause ")
-                if (player != null) {
-                    if (player.playbackState == Player.STATE_READY) {
-                        player?.pause()
-                    }
-                }
-
-            }
-
-            "Next" -> {
-                Toast.makeText(context, "Play Next", Toast.LENGTH_SHORT).show()
-                Log.i("Toast", "Play Next ")
-                if (player != null) {
-                    if (player.playbackState == Player.STATE_READY) {
-                        player?.seekToNext()
-                    }
-                }
-
-            }
-        }*/
-
         val serviceIntent = Intent(context, MusicPlayerService::class.java)
         intent?.action?.let { action ->
             serviceIntent.putExtra("action", action)
