@@ -69,6 +69,10 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
                     Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
                     pauseMusic()
                 }
+                "Play" -> {
+                    Toast.makeText(this, "Play", Toast.LENGTH_SHORT).show()
+                    playMusic()
+                }
                 "Next" -> {
                     Toast.makeText(this, "Play Next", Toast.LENGTH_SHORT).show()
                     nextMusic()
@@ -106,7 +110,6 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
     private fun createNotification(): Notification {
         val intent = Intent(this, MediaPlayerActivity::class.java)
-        intent.putExtra("action", "Pause")
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             this,
             0,
@@ -117,8 +120,11 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
         val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
             .setMediaSession(mediaSession.sessionToken)
-            .setShowActionsInCompactView(0, 1, 2) // Index of playback controls (play, pause, stop)
+            .setShowActionsInCompactView(0, 1, 2, 3) // Index of playback controls (play, pause, stop)
 
+
+        val playPauseIcon = if (isPlaying()) R.drawable.ic_pause else R.drawable.ic_play
+        val playPause = if (isPlaying()) "Pause" else "Play"
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Music Player")
@@ -127,7 +133,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
             .setContentIntent(pendingIntent)
             .setStyle(mediaStyle)
             .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent("Previous"))
-            .addAction(R.drawable.ic_pause, "Pause", getPendingIntent("Pause"))
+            .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
             .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
 
         return notificationBuilder.build()
@@ -177,11 +183,17 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     }
 
     override fun playMusic() {
-        player.play()
+        if (!player.isPlaying){
+            player.play()
+        }
+
     }
 
     override fun pauseMusic() {
-        player.pause()
+        if (player.isPlaying){
+            player.pause()
+        }
+
     }
 
     override fun previousMusic() {
@@ -190,6 +202,10 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
     override fun nextMusic() {
         player.seekToNextMediaItem()
+    }
+
+    override fun isPlaying() : Boolean {
+        return player.isPlaying
     }
 
     override fun shuffleMusic() {
@@ -291,7 +307,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         )*/
     }
 
-    override fun initializePlayer() : ExoPlayer{
+    override fun initializePlayer() {
         player = ExoPlayer.Builder(this).build()
 
         val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
@@ -311,6 +327,9 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         // Prepare the player.
         player.prepare()
 
+    }
+
+    override fun getPlayer(): ExoPlayer {
         return player
     }
 

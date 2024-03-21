@@ -4,7 +4,8 @@ import androidx.media3.exoplayer.ExoPlayer
 
 interface PlayAction {
 
-    fun initializePlayer() : ExoPlayer
+    fun getPlayer() : ExoPlayer
+    fun initializePlayer()
     fun playMusic()
 
     fun pauseMusic()
@@ -12,6 +13,8 @@ interface PlayAction {
     fun previousMusic()
 
     fun nextMusic()
+
+    fun isPlaying() : Boolean
 
     fun shuffleMusic()
 

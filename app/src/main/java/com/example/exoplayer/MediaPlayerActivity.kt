@@ -33,7 +33,15 @@ class MediaPlayerActivity : AppCompatActivity() {
         binding = CustomExoLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.playerView.player = onPlayAction.initializePlayer()
+        binding.playerView.player = onPlayAction.getPlayer()
+
+        if (onPlayAction.isPlaying()){
+            binding.ivPlay.visibility = View.GONE
+            binding.ivPause.visibility = View.VISIBLE
+        }else{
+            binding.ivPlay.visibility = View.VISIBLE
+            binding.ivPause.visibility = View.GONE
+        }
 
         // SeekBar
         updateSeekbar()
@@ -67,6 +75,20 @@ class MediaPlayerActivity : AppCompatActivity() {
         // Track selector
         onPlayAction.trackSelector()
     }
+    override fun onStart() {
+        super.onStart()
+        handler.post(updateProgressTask)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        handler.removeCallbacks(updateProgressTask)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(notificationReceiver)
+    }
 
     private fun updateSeekbar(){
         val currentPosition = onPlayAction.playerCurrentPosition()
@@ -82,28 +104,11 @@ class MediaPlayerActivity : AppCompatActivity() {
 
         Log.d("Player", "Current time: $currentMinutes:$currentSeconds, Total time: $totalMinutes:$totalSeconds")
 
-
         // Update UI elements
         binding.seekBar.progress = currentPosition.toInt()
         binding.seekBar.max = duration.toInt()
         binding.seekBarStart.text = String.format("%02d:%02d", currentMinutes, currentSeconds)
         binding.seekbarEnd.text = String.format("%02d:%02d", totalMinutes, totalSeconds)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        handler.post(updateProgressTask)
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-        handler.removeCallbacks(updateProgressTask)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(notificationReceiver)
     }
 
     companion object {
