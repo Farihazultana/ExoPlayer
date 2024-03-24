@@ -1,14 +1,12 @@
 package com.example.exoplayer
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.os.IInterface
 import android.os.Parcel
@@ -33,6 +31,8 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
     private lateinit var player: ExoPlayer
 
+    private var isPlaying: Boolean = false
+
 
     inner class MusicPlayerBinder : Binder() {
         fun getService(): MusicPlayerService = this@MusicPlayerService
@@ -54,10 +54,6 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-        createNotificationChannel()
-        val notification = createNotification()
-        startForeground(1, notification)
 
         intent?.getStringExtra("action")?.let { action ->
             when (action) {
@@ -94,56 +90,6 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         super.onDestroy()
         unregisterReceiver(notificationReceiver)
         releasePlayer()
-    }
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                "Music Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(serviceChannel)
-        }
-    }
-
-    private fun createNotification(): Notification {
-        val intent = Intent(this, MediaPlayerActivity::class.java)
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_MUTABLE
-        )
-
-
-        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
-            .setMediaSession(mediaSession.sessionToken)
-            .setShowActionsInCompactView(0, 1, 2, 3) // Index of playback controls (play, pause, stop)
-
-
-        val playPauseIcon = if (isPlaying()) R.drawable.ic_pause else R.drawable.ic_play
-        val playPause = if (isPlaying()) "Pause" else "Play"
-
-        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Music Player")
-            .setContentText("Playing Music")
-            .setSmallIcon(R.drawable.ic_music)
-            .setContentIntent(pendingIntent)
-            .setStyle(mediaStyle)
-            .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent("Previous"))
-            .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
-            .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
-
-        return notificationBuilder.build()
-    }
-
-    private fun getPendingIntent(action: String): PendingIntent {
-        val intent = Intent(this, NotificationController::class.java)
-        intent.action = action
-
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE )
     }
 
     override fun getInterfaceDescriptor(): String? {
@@ -183,17 +129,16 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     }
 
     override fun playMusic() {
-        if (!player.isPlaying){
-            player.play()
-        }
 
+        player.play()
+        isPlaying = true
+        notifyPlaybackStateChanged()
     }
 
     override fun pauseMusic() {
-        if (player.isPlaying){
-            player.pause()
-        }
-
+        player.pause()
+        isPlaying = false
+        notifyPlaybackStateChanged()
     }
 
     override fun previousMusic() {
@@ -331,6 +276,56 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
     override fun getPlayer(): ExoPlayer {
         return player
+    }
+
+    private fun notifyPlaybackStateChanged() {
+        val intent = Intent("PlaybackState")
+        intent.putExtra("isPlaying", isPlaying)
+        sendBroadcast(intent)
+        updateNotification(isPlaying)
+    }
+
+    private fun updateNotification(isPlaying: Boolean) {
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(1, createNotification(isPlaying))
+    }
+
+    private fun createNotification(isPlaying: Boolean): Notification {
+        val intent = Intent(this, MediaPlayerActivity::class.java)
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_MUTABLE
+        )
+
+
+        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
+            .setMediaSession(mediaSession.sessionToken)
+            .setShowActionsInCompactView(0, 1, 2, 3)
+
+
+        val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+        val playPause = if (isPlaying) "Pause" else "Play"
+
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Music Player")
+            .setContentText("Playing Music")
+            .setSmallIcon(R.drawable.ic_music)
+            .setContentIntent(pendingIntent)
+            .setStyle(mediaStyle)
+            .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent("Previous"))
+            .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
+            .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
+
+        return notificationBuilder.build()
+    }
+
+    private fun getPendingIntent(action: String): PendingIntent {
+        val intent = Intent(this, NotificationController::class.java)
+        intent.action = action
+
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE )
     }
 
 }
