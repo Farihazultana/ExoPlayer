@@ -12,10 +12,13 @@ import android.graphics.Color
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.os.IInterface
 import android.os.Parcel
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
@@ -340,6 +343,18 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
             .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
             .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
             .setSound(Uri.EMPTY)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            mediaSession.setMetadata(
+                MediaMetadataCompat.Builder()
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, MediaPlayerActivity.onPlayAction.playerDuration())
+                .build())
+
+            mediaSession.setPlaybackState(
+                PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, MediaPlayerActivity.onPlayAction.playerCurrentPosition(), 1F)
+                .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+                .build())
+        }
 
         return notificationBuilder.build()
     }

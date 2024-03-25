@@ -14,7 +14,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.view.View
 import androidx.annotation.OptIn
@@ -241,6 +243,16 @@ class MediaPlayerActivity : AppCompatActivity() {
             .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
             .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
             .setSound(Uri.EMPTY)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            mediaSession.setMetadata(MediaMetadataCompat.Builder()
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, onPlayAction.playerDuration())
+                .build())
+
+            mediaSession.setPlaybackState(PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, onPlayAction.playerCurrentPosition(), 1F)
+                .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+                .build())
+        }
 
 
         return notificationBuilder.build()
