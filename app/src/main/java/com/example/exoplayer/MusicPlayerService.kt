@@ -1,24 +1,32 @@
 package com.example.exoplayer
 
+import android.R.attr.path
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.BitmapFactory
+import android.graphics.Color
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.os.Binder
 import android.os.IBinder
 import android.os.IInterface
 import android.os.Parcel
 import android.support.v4.media.session.MediaSessionCompat
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import java.io.FileDescriptor
+
 
 @OptIn(UnstableApi::class)
 class MusicPlayerService : Service(), IBinder, PlayAction {
@@ -33,6 +41,8 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
     private var isPlaying: Boolean = false
 
+    private var currentPosition : Long = 0L
+    private var duration : Long = 0L
 
     inner class MusicPlayerBinder : Binder() {
         fun getService(): MusicPlayerService = this@MusicPlayerService
@@ -49,7 +59,9 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
         initializePlayer()
-        MediaPlayerActivity.onPlayAction(this)
+        MediaPlayerActivity.setOnPlayAction(this)
+
+        //startForeground(1, createNotification(isPlaying))
 
     }
 
@@ -68,6 +80,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
                 "Play" -> {
                     Toast.makeText(this, "Play", Toast.LENGTH_SHORT).show()
                     playMusic()
+                    startForeground(1, createNotification(true))
                 }
                 "Next" -> {
                     Toast.makeText(this, "Play Next", Toast.LENGTH_SHORT).show()
@@ -129,7 +142,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     }
 
     override fun playMusic() {
-
+        //startForeground(1, createNotification(isPlaying))
         player.play()
         isPlaying = true
         notifyPlaybackStateChanged()
@@ -143,10 +156,12 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
     override fun previousMusic() {
         player.seekToPreviousMediaItem()
+        notifyPlaybackStateChanged()
     }
 
     override fun nextMusic() {
         player.seekToNextMediaItem()
+        notifyPlaybackStateChanged()
     }
 
     override fun isPlaying() : Boolean {
@@ -158,7 +173,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     }
 
     override fun playerCurrentPosition() : Long {
-        var currentPosition = 0L
+        currentPosition = 0L
         if (player.playbackState == Player.STATE_READY) {
             currentPosition = player.currentPosition
         }
@@ -167,7 +182,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
 
     override fun playerDuration() : Long{
-        var duration = 0L
+        duration = 0L
         if (player.playbackState == Player.STATE_READY) {
             duration = player.duration
         }
@@ -252,6 +267,21 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         )*/
     }
 
+
+    fun getTitle() : String{
+        var title = ""
+        player.addListener(object : Player.Listener {
+            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                super.onMediaMetadataChanged(mediaMetadata)
+                Log.d("metadata", mediaMetadata.title.toString())
+
+                title = mediaMetadata.title.toString()
+            }
+        })
+
+        return title
+    }
+
     override fun initializePlayer() {
         player = ExoPlayer.Builder(this).build()
 
@@ -264,10 +294,12 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         val secondItem = MediaItem.fromUri(url2!!)
         val thirdItem = MediaItem.fromUri(url3!!)
 
+
         // Set the media item to be played.
         player.addMediaItem(firstItem)
         player.addMediaItem(secondItem)
         player.addMediaItem(thirdItem)
+
 
         // Prepare the player.
         player.prepare()
@@ -312,11 +344,16 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
             .setContentTitle("Music Player")
             .setContentText("Playing Music")
             .setSmallIcon(R.drawable.ic_music)
+            .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.bitmap))
             .setContentIntent(pendingIntent)
             .setStyle(mediaStyle)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setSilent(true)
+            .setProgress(duration.toInt(), currentPosition.toInt(), false)
             .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent("Previous"))
             .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
             .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
+            .setSound(Uri.EMPTY)
 
         return notificationBuilder.build()
     }

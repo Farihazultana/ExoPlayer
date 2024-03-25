@@ -4,11 +4,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -16,10 +17,11 @@ import android.os.Looper
 import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.example.exoplayer.databinding.CustomExoLayoutBinding
 
@@ -31,6 +33,9 @@ class MediaPlayerActivity : AppCompatActivity() {
     private lateinit var mediaSession: MediaSessionCompat
 
     private lateinit var binding: CustomExoLayoutBinding
+
+    private var currentPosition : Long = 0L
+    private var duration : Long = 0L
 
     private val handler = Handler(Looper.getMainLooper())
     private val updateProgressTask: Runnable = object : Runnable {
@@ -70,15 +75,20 @@ class MediaPlayerActivity : AppCompatActivity() {
         registerReceiver(playbackStateReceiver, IntentFilter("PlaybackState"))
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
+
+
         binding.playerView.player = onPlayAction.getPlayer()
 
-        if (onPlayAction.isPlaying()){
-            binding.ivPlay.visibility = View.GONE
-            binding.ivPause.visibility = View.VISIBLE
-        }else{
-            binding.ivPlay.visibility = View.VISIBLE
-            binding.ivPause.visibility = View.GONE
-        }
+
+        onPlayAction.getPlayer().addListener(object : Player.Listener {
+            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                super.onMediaMetadataChanged(mediaMetadata)
+                Log.d("metadata", mediaMetadata.title.toString())
+
+                binding.tvSong.text = mediaMetadata.title.toString()
+                binding.tvSinger.text = mediaMetadata.albumArtist.toString()
+            }
+        })
 
         // SeekBar
         updateSeekbar()
@@ -128,9 +138,10 @@ class MediaPlayerActivity : AppCompatActivity() {
         onPlayAction.trackSelector()
     }
 
-    private fun updateNotification(isPlaying: Boolean) {
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(1, createNotification(isPlaying))
+    override fun onResume() {
+        super.onResume()
+        updateNotification(onPlayAction.isPlaying())
+        updatePlayPauseButton(onPlayAction.isPlaying())
     }
 
 
@@ -151,8 +162,8 @@ class MediaPlayerActivity : AppCompatActivity() {
     }
 
     private fun updateSeekbar(){
-        val currentPosition = onPlayAction.playerCurrentPosition()
-        val duration = onPlayAction.playerDuration()
+        currentPosition = onPlayAction.playerCurrentPosition()
+        duration = onPlayAction.playerDuration()
 
         // Calculate minutes and seconds for current position
         val currentMinutes = currentPosition / 1000 / 60
@@ -169,6 +180,8 @@ class MediaPlayerActivity : AppCompatActivity() {
         binding.seekBar.max = duration.toInt()
         binding.seekBarStart.text = String.format("%02d:%02d", currentMinutes, currentSeconds)
         binding.seekbarEnd.text = String.format("%02d:%02d", totalMinutes, totalSeconds)
+
+
     }
 
 
@@ -217,13 +230,24 @@ class MediaPlayerActivity : AppCompatActivity() {
             .setContentTitle("Music Player")
             .setContentText("Playing Music")
             .setSmallIcon(R.drawable.ic_music)
+            .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.bitmap))
             .setContentIntent(pendingIntent)
             .setStyle(mediaStyle)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setSilent(true)
+            .setProgress(duration.toInt(), currentPosition.toInt(), false)
             .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent("Previous"))
             .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
             .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
+            .setSound(Uri.EMPTY)
+
 
         return notificationBuilder.build()
+    }
+
+    private fun updateNotification(isPlaying: Boolean) {
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(1, createNotification(isPlaying))
     }
 
     private fun getPendingIntent(action: String): PendingIntent {
@@ -235,9 +259,10 @@ class MediaPlayerActivity : AppCompatActivity() {
 
     companion object {
         lateinit var onPlayAction: PlayAction
+            private set
 
-        fun onPlayAction(setAction : PlayAction){
-            this.onPlayAction = setAction
+        fun setOnPlayAction(action: PlayAction) {
+            onPlayAction = action
         }
     }
 

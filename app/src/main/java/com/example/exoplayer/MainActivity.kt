@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity(){
             goToPlayerPage()
         }
 
+
     }
 
     override fun onStart() {
@@ -80,6 +81,11 @@ class MainActivity : AppCompatActivity(){
             unbindService(serviceConnection)
             isServiceBound = false
         }
+    }
+
+    override fun onDestroy() {
+        stopService(intent)
+        super.onDestroy()
     }
 
     private fun startMusicPlayerService() {
