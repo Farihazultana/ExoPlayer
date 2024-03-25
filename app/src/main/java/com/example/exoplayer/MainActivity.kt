@@ -69,6 +69,9 @@ class MainActivity : AppCompatActivity(){
 
     override fun onStart() {
         super.onStart()
+        IntentFilter(Intent.ACTION_AIRPLANE_MODE_CHANGED).also {
+            registerReceiver(broadcastReceiver, it)
+        }
         bindService(Intent(this, MusicPlayerService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
         startMusicPlayerService()
     }
