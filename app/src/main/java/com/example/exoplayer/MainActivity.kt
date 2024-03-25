@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.example.exoplayer.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity(){
@@ -88,6 +89,7 @@ class MainActivity : AppCompatActivity(){
 
     override fun onDestroy() {
         stopService(intent)
+        unregisterReceiver(broadcastReceiver)
         super.onDestroy()
     }
 
@@ -95,7 +97,7 @@ class MainActivity : AppCompatActivity(){
         intent = Intent(this, MusicPlayerService::class.java)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
+            ContextCompat.startForegroundService(this, intent)
         } else {
             stopService(intent)
         }

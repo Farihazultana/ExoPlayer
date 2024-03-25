@@ -159,6 +159,7 @@ class MediaPlayerActivity : AppCompatActivity() {
         super.onDestroy()
         unregisterReceiver(notificationReceiver)
         unregisterReceiver(playbackStateReceiver)
+        onPlayAction.releasePlayer()
     }
 
     private fun updateSeekbar(){

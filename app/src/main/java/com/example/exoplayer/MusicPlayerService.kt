@@ -61,7 +61,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         initializePlayer()
         MediaPlayerActivity.setOnPlayAction(this)
 
-        //startForeground(1, createNotification(isPlaying))
+        startForeground(1, createNotification(isPlaying))
 
     }
 
@@ -80,7 +80,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
                 "Play" -> {
                     Toast.makeText(this, "Play", Toast.LENGTH_SHORT).show()
                     playMusic()
-                    startForeground(1, createNotification(true))
+
                 }
                 "Next" -> {
                     Toast.makeText(this, "Play Next", Toast.LENGTH_SHORT).show()
@@ -93,6 +93,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
         return START_NOT_STICKY
     }
+
 
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -265,21 +266,6 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
                 }
             }
         )*/
-    }
-
-
-    fun getTitle() : String{
-        var title = ""
-        player.addListener(object : Player.Listener {
-            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                super.onMediaMetadataChanged(mediaMetadata)
-                Log.d("metadata", mediaMetadata.title.toString())
-
-                title = mediaMetadata.title.toString()
-            }
-        })
-
-        return title
     }
 
     override fun initializePlayer() {
