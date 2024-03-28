@@ -231,7 +231,7 @@ class MediaPlayerActivity : AppCompatActivity() {
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, onPlayAction.playerDuration())
                 .build())
 
-            mediaSession.setPlaybackState(PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, onPlayAction.playerCurrentPosition(), playbackSpeed)
+            mediaSession.setPlaybackState(PlaybackStateCompat.Builder().setState(if (isPlaying){PlaybackStateCompat.STATE_PLAYING} else{PlaybackStateCompat.STATE_PAUSED}, onPlayAction.playerCurrentPosition(), playbackSpeed)
                 .setActions(PlaybackStateCompat.ACTION_SEEK_TO or
                         PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
                         if (isPlaying){PlaybackStateCompat.ACTION_PAUSE} else {PlaybackStateCompat.ACTION_PLAY} or
@@ -257,8 +257,6 @@ class MediaPlayerActivity : AppCompatActivity() {
             .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
             .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
             .setSound(Uri.EMPTY)
-
-
 
 
         return notificationBuilder.build()

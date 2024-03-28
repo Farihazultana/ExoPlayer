@@ -333,7 +333,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
                     .build())
 
             mediaSession.setPlaybackState(
-                PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, MediaPlayerActivity.onPlayAction.playerCurrentPosition(), playbackSpeed)
+                PlaybackStateCompat.Builder().setState(if (isPlaying){PlaybackStateCompat.STATE_PLAYING} else{PlaybackStateCompat.STATE_PAUSED}, MediaPlayerActivity.onPlayAction.playerCurrentPosition(), playbackSpeed)
                     .setActions(PlaybackStateCompat.ACTION_SEEK_TO or
                             PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
                             if (isPlaying){PlaybackStateCompat.ACTION_PAUSE} else{PlaybackStateCompat.ACTION_PLAY} or
