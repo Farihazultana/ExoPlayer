@@ -67,6 +67,9 @@ class MediaPlayerActivity : AppCompatActivity() {
         binding = CustomExoLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        //notification channel
+        NotificationUtils.createNotificationChannel(this)
+
         val filter = IntentFilter().apply {
             addAction("Play")
             addAction("Pause")
@@ -95,8 +98,7 @@ class MediaPlayerActivity : AppCompatActivity() {
         // SeekBar
         updateSeekbar()
 
-        //notification channel
-        createNotificationChannel()
+
 
         // Set up UI controls
         binding.ivPlay.setOnClickListener {
@@ -199,81 +201,10 @@ class MediaPlayerActivity : AppCompatActivity() {
     }
 
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                "Music Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(serviceChannel)
-        }
-    }
-
-    private fun createNotification(isPlaying: Boolean): Notification {
-        val intent = Intent(this, MediaPlayerActivity::class.java)
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_MUTABLE
-        )
-
-
-        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
-            .setMediaSession(mediaSession.sessionToken)
-            .setShowActionsInCompactView(0, 1, 2, 3)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            val playbackSpeed = if (isPlaying) 1F else 0F
-            mediaSession.setMetadata(MediaMetadataCompat.Builder()
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, onPlayAction.playerDuration())
-                .build())
-
-            mediaSession.setPlaybackState(PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, onPlayAction.playerCurrentPosition(), playbackSpeed)
-                .setActions(PlaybackStateCompat.ACTION_SEEK_TO or
-                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-                        if (isPlaying){PlaybackStateCompat.ACTION_PAUSE} else {PlaybackStateCompat.ACTION_PLAY} or
-                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
-                .build())
-        }
-
-
-        val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
-        val playPause = if (isPlaying) "Pause" else "Play"
-
-        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Music Player")
-            .setContentText("Playing Music")
-            .setSmallIcon(R.drawable.ic_music)
-            .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.bitmap))
-            .setContentIntent(pendingIntent)
-            .setStyle(mediaStyle)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setSilent(true)
-            .setProgress(duration.toInt(), currentPosition.toInt(), false)
-            .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent("Previous"))
-            .addAction(playPauseIcon, playPause, getPendingIntent(playPause))
-            .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
-            .setSound(Uri.EMPTY)
-
-
-
-
-        return notificationBuilder.build()
-    }
 
     private fun updateNotification(isPlaying: Boolean) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(1, createNotification(isPlaying))
-    }
-
-    private fun getPendingIntent(action: String): PendingIntent {
-        val intent = Intent(this, NotificationController::class.java)
-        intent.action = action
-
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE )
+        notificationManager.notify(1, NotificationUtils.createNotification(this,mediaSession, isPlaying, currentPosition, duration))
     }
 
     companion object {
