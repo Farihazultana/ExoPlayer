@@ -325,6 +325,22 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
             .setMediaSession(mediaSession.sessionToken)
             .setShowActionsInCompactView(0, 1, 2, 3)
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            val playbackSpeed = if (isPlaying) 1F else 0F
+            mediaSession.setMetadata(
+                MediaMetadataCompat.Builder()
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, MediaPlayerActivity.onPlayAction.playerDuration())
+                    .build())
+
+            mediaSession.setPlaybackState(
+                PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, MediaPlayerActivity.onPlayAction.playerCurrentPosition(), playbackSpeed)
+                    .setActions(PlaybackStateCompat.ACTION_SEEK_TO or
+                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+                            if (isPlaying){PlaybackStateCompat.ACTION_PAUSE} else{PlaybackStateCompat.ACTION_PLAY} or
+                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
+                    .build())
+        }
+
 
         val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
         val playPause = if (isPlaying) "Pause" else "Play"
@@ -344,17 +360,6 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
             .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent("Next"))
             .setSound(Uri.EMPTY)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            mediaSession.setMetadata(
-                MediaMetadataCompat.Builder()
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, MediaPlayerActivity.onPlayAction.playerDuration())
-                .build())
-
-            mediaSession.setPlaybackState(
-                PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, MediaPlayerActivity.onPlayAction.playerCurrentPosition(), 1F)
-                .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
-                .build())
-        }
 
         return notificationBuilder.build()
     }
