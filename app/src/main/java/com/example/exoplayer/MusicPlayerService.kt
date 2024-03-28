@@ -73,7 +73,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(1, NotificationUtils.createNotification(this, isPlaying, currentPosition, duration))
+        startForeground(1, NotificationUtils.createNotification(this, mediaSession, isPlaying, currentPosition, duration))
 
         intent?.getStringExtra("action")?.let { action ->
             when (action) {
@@ -313,7 +313,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
 
     private fun updateNotification(isPlaying: Boolean) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(1, NotificationUtils.createNotification(this, isPlaying, currentPosition, duration))
+        notificationManager.notify(1, NotificationUtils.createNotification(this,mediaSession, isPlaying, currentPosition, duration))
     }
 
 

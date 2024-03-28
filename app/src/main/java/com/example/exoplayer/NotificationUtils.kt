@@ -13,66 +13,56 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
+import com.example.exoplayer.MediaPlayerActivity.Companion.onPlayAction
 
 object NotificationUtils {
     private val CHANNEL_ID = "Music Service Channel ID"
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-             CHANNEL_ID
-            val channelName = "Music Service Channel"
-            val importance = NotificationManager.IMPORTANCE_LOW
-            val channel = NotificationChannel(CHANNEL_ID, channelName, importance).apply {
-                description = "Notification Channel for Music Service"
-                enableLights(false)
-                enableVibration(false)
-            }
-            val notificationManager =
-                context.getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
+            val serviceChannel = NotificationChannel(
+                CHANNEL_ID,
+                "Music Service Channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(serviceChannel)
         }
     }
 
     fun createNotification(
         context: Context,
+        mediaSession: MediaSessionCompat,
         isPlaying: Boolean,
         currentPosition: Long,
         duration: Long
     ): Notification {
         val intent = Intent(context, MediaPlayerActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context,
             0,
             intent,
             PendingIntent.FLAG_MUTABLE
         )
 
+
         val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
+            .setMediaSession(mediaSession.sessionToken)
             .setShowActionsInCompactView(0, 1, 2, 3)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
             val playbackSpeed = if (isPlaying) 1F else 0F
-            val mediaSession = MediaSessionCompat(context, "MusicPlayerService")
-            mediaSession.setMetadata(
-                MediaMetadataCompat.Builder()
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
-                    .build()
-            )
-            mediaSession.setPlaybackState(
-                PlaybackStateCompat.Builder()
-                    .setState(
-                        if (isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED,
-                        currentPosition,
-                        playbackSpeed
-                    )
-                    .setActions(
-                        PlaybackStateCompat.ACTION_SEEK_TO or
-                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-                                if (isPlaying) PlaybackStateCompat.ACTION_PAUSE else PlaybackStateCompat.ACTION_PLAY or
-                                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                    )
-                    .build()
-            )
+            mediaSession.setMetadata(MediaMetadataCompat.Builder()
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, onPlayAction.playerDuration())
+                .build())
+
+            mediaSession.setPlaybackState(PlaybackStateCompat.Builder().setState(if (isPlaying){PlaybackStateCompat.STATE_PLAYING} else{PlaybackStateCompat.STATE_PAUSED}, onPlayAction.playerCurrentPosition(), playbackSpeed)
+                .setActions(PlaybackStateCompat.ACTION_SEEK_TO or
+                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+                        if (isPlaying){PlaybackStateCompat.ACTION_PAUSE} else {PlaybackStateCompat.ACTION_PLAY} or
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
+                .build())
         }
+
 
         val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
         val playPause = if (isPlaying) "Pause" else "Play"
@@ -87,11 +77,10 @@ object NotificationUtils {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSilent(true)
             .setProgress(duration.toInt(), currentPosition.toInt(), false)
-            .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent(context, "Previous"))
-            .addAction(playPauseIcon, playPause, getPendingIntent(context, playPause))
-            .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent(context, "Next"))
+            .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent(context,"Previous"))
+            .addAction(playPauseIcon, playPause, getPendingIntent(context,playPause))
+            .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent(context,"Next"))
             .setSound(Uri.EMPTY)
-
 
 
         return notificationBuilder.build()
