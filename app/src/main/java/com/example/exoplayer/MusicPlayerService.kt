@@ -154,6 +154,9 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         //startForeground(1, createNotification(isPlaying))
         player.play()
         isPlaying = true
+        mediaSession.addOnActiveChangeListener {
+
+        }
         notifyPlaybackStateChanged()
     }
 

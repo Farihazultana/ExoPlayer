@@ -19,6 +19,8 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.view.View
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
@@ -185,6 +187,7 @@ class MediaPlayerActivity : AppCompatActivity() {
         binding.seekBar.max = duration.toInt()
         binding.seekBarStart.text = String.format("%02d:%02d", currentMinutes, currentSeconds)
         binding.seekbarEnd.text = String.format("%02d:%02d", totalMinutes, totalSeconds)
+
 
 
     }

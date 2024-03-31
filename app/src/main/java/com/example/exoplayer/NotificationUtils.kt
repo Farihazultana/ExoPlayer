@@ -37,30 +37,44 @@ object NotificationUtils {
         duration: Long
     ): Notification {
         val intent = Intent(context, MediaPlayerActivity::class.java)
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_MUTABLE
-        )
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_MUTABLE)
 
 
         val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
             .setMediaSession(mediaSession.sessionToken)
             .setShowActionsInCompactView(0, 1, 2, 3)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val playbackSpeed = if (isPlaying) 1F else 0F
-            mediaSession.setMetadata(MediaMetadataCompat.Builder()
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, onPlayAction.playerDuration())
-                .build())
+            mediaSession.setMetadata(
+                MediaMetadataCompat.Builder()
+                    .putLong(
+                        MediaMetadataCompat.METADATA_KEY_DURATION,
+                        onPlayAction.playerDuration()
+                    )
+                    .build()
+            )
 
-            mediaSession.setPlaybackState(PlaybackStateCompat.Builder().setState(if (isPlaying){PlaybackStateCompat.STATE_PLAYING} else{PlaybackStateCompat.STATE_PAUSED}, onPlayAction.playerCurrentPosition(), playbackSpeed)
-                .setActions(PlaybackStateCompat.ACTION_SEEK_TO or
-                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-                        if (isPlaying){PlaybackStateCompat.ACTION_PAUSE} else {PlaybackStateCompat.ACTION_PLAY} or
-                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
-                .build())
+            mediaSession.setPlaybackState(
+                PlaybackStateCompat.Builder().setState(
+                    if (isPlaying) {
+                        PlaybackStateCompat.STATE_PLAYING
+                    } else {
+                        PlaybackStateCompat.STATE_PAUSED
+                    }, onPlayAction.playerCurrentPosition(), playbackSpeed
+                )
+                    .setActions(
+                        PlaybackStateCompat.ACTION_SEEK_TO or
+                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+                                if (isPlaying) {
+                                    PlaybackStateCompat.ACTION_PAUSE
+                                } else {
+                                    PlaybackStateCompat.ACTION_PLAY
+                                } or
+                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                    )
+                    .build()
+            )
         }
 
 
@@ -77,9 +91,9 @@ object NotificationUtils {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSilent(true)
             .setProgress(duration.toInt(), currentPosition.toInt(), false)
-            .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent(context,"Previous"))
-            .addAction(playPauseIcon, playPause, getPendingIntent(context,playPause))
-            .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent(context,"Next"))
+            .addAction(R.drawable.ic_skip_previous, "Previous", getPendingIntent(context, "Previous"))
+            .addAction(playPauseIcon, playPause, getPendingIntent(context, playPause))
+            .addAction(R.drawable.ic_skip_next, "Next", getPendingIntent(context, "Next"))
             .setSound(Uri.EMPTY)
 
 
