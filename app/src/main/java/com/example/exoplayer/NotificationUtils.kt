@@ -44,7 +44,7 @@ object NotificationUtils {
             .setMediaSession(mediaSession.sessionToken)
             .setShowActionsInCompactView(0, 1, 2, 3)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val playbackSpeed = if (isPlaying) 1F else 0F
             mediaSession.setMetadata(
                 MediaMetadataCompat.Builder()
@@ -75,7 +75,7 @@ object NotificationUtils {
                     )
                     .build()
             )
-        }
+        }*/
 
 
         val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
@@ -87,7 +87,6 @@ object NotificationUtils {
             .setSmallIcon(R.drawable.ic_music)
             .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.bitmap))
             .setContentIntent(pendingIntent)
-            .setStyle(mediaStyle)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSilent(true)
             .setProgress(duration.toInt(), currentPosition.toInt(), false)

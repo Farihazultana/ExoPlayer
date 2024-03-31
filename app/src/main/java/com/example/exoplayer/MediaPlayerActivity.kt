@@ -36,6 +36,7 @@ class MediaPlayerActivity : AppCompatActivity() {
     private val CHANNEL_ID = "Music Service Channel ID"
     private lateinit var mediaSession: MediaSessionCompat
 
+
     private lateinit var binding: CustomExoLayoutBinding
 
     private var currentPosition : Long = 0L
