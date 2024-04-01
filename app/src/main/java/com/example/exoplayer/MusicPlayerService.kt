@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 import android.media.session.MediaSession
 import android.os.Binder
 import android.os.Handler
@@ -76,7 +77,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(1, NotificationUtils.createNotification(this, mediaSession, isPlaying, currentPosition, duration))
+        startForeground(1, NotificationUtils.createNotification(this, mediaSession, isPlaying, currentPosition, duration),FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
 
         intent?.getStringExtra("action")?.let { action ->
             when (action) {
