@@ -1,31 +1,21 @@
 package com.example.exoplayer
 
-import android.R.attr.path
-import android.app.Notification
-import android.app.NotificationChannel
+
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.media.MediaMetadataRetriever
-import android.net.Uri
+import android.media.session.MediaSession
 import android.os.Binder
-import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.os.IInterface
+import android.os.Looper
 import android.os.Parcel
-import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -36,6 +26,10 @@ import java.io.FileDescriptor
 class MusicPlayerService : Service(), IBinder, PlayAction {
     private val notificationReceiver: NotificationController = NotificationController()
     private val CHANNEL_ID = "Music Service Channel ID"
+    private val UPDATE_INTERVAL_MILLIS = 1000
+    private lateinit var notificationManager: NotificationManager
+    private lateinit var updateProgressRunnable: Runnable
+    private lateinit var updateProgressHandler: Handler
 
     private lateinit var mediaSession: MediaSessionCompat
 
@@ -64,6 +58,15 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         }
         registerReceiver(notificationReceiver, filter)
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
+
+        updateProgressHandler = Handler(Looper.getMainLooper())
+        updateProgressRunnable = object : Runnable {
+            override fun run() {
+                updateNotification(isPlaying)
+                updateProgressHandler.postDelayed(this, UPDATE_INTERVAL_MILLIS.toLong())
+            }
+        }
+        updateProgressHandler.postDelayed(updateProgressRunnable, UPDATE_INTERVAL_MILLIS.toLong())
 
         initializePlayer()
         MediaPlayerActivity.setOnPlayAction(this)
@@ -112,6 +115,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         super.onDestroy()
         unregisterReceiver(notificationReceiver)
         releasePlayer()
+        updateProgressHandler.removeCallbacks(updateProgressRunnable)
     }
 
     override fun getInterfaceDescriptor(): String? {
