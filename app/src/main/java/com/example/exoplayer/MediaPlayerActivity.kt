@@ -33,7 +33,7 @@ import com.example.exoplayer.databinding.CustomExoLayoutBinding
 class MediaPlayerActivity : AppCompatActivity() {
 
     private val notificationReceiver: NotificationController = NotificationController()
-    private val CHANNEL_ID = "Music Service Channel ID"
+
     private lateinit var mediaSession: MediaSessionCompat
 
 
@@ -58,7 +58,7 @@ class MediaPlayerActivity : AppCompatActivity() {
                 if (it.action == "PlaybackState") {
                     val isPlaying = it.getBooleanExtra("isPlaying", false)
                     updatePlayPauseButton(isPlaying)
-                    updateNotification(isPlaying)
+                    NotificationUtils.updateNotification(this@MediaPlayerActivity,onPlayAction.isPlaying(), mediaSession, currentPosition, duration)
                 }
             }
         }
@@ -87,7 +87,12 @@ class MediaPlayerActivity : AppCompatActivity() {
         val songsUrls = arrayListOf(
             "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
             "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
-            "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
+            "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3",
+            "https://github.com/SergLam/Audio-Sample-files/raw/master/sample.m4a",
+            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
         )
         onPlayAction.initializePlayer(songsUrls)
         binding.playerView.player = onPlayAction.getPlayer()
@@ -115,7 +120,7 @@ class MediaPlayerActivity : AppCompatActivity() {
             binding.ivPause.visibility = View.VISIBLE
 
 
-            updateNotification(onPlayAction.isPlaying())
+            NotificationUtils.updateNotification(this,onPlayAction.isPlaying(), mediaSession, currentPosition, duration)
 
 
         }
@@ -125,25 +130,25 @@ class MediaPlayerActivity : AppCompatActivity() {
             binding.ivPlay.visibility = View.VISIBLE
             binding.ivPause.visibility = View.GONE
 
-            updateNotification(onPlayAction.isPlaying())
+            NotificationUtils.updateNotification(this,onPlayAction.isPlaying(), mediaSession, currentPosition, duration)
         }
 
         binding.ivPlayNext.setOnClickListener {
             onPlayAction.nextMusic()
 
-            updateNotification(onPlayAction.isPlaying())
+            NotificationUtils.updateNotification(this,onPlayAction.isPlaying(), mediaSession, currentPosition, duration)
         }
 
         binding.ivPlayPrev.setOnClickListener {
             onPlayAction.previousMusic()
 
-            updateNotification(onPlayAction.isPlaying())
+            NotificationUtils.updateNotification(this,onPlayAction.isPlaying(), mediaSession, currentPosition, duration)
         }
 
         binding.ivShuffle.setOnClickListener {
             onPlayAction.shuffleMusic()
 
-            updateNotification(onPlayAction.isPlaying())
+            NotificationUtils.updateNotification(this,onPlayAction.isPlaying(), mediaSession, currentPosition, duration)
         }
 
         // Track selector
@@ -152,7 +157,7 @@ class MediaPlayerActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        updateNotification(onPlayAction.isPlaying())
+        NotificationUtils.updateNotification(this,onPlayAction.isPlaying(), mediaSession, currentPosition, duration)
         updatePlayPauseButton(onPlayAction.isPlaying())
     }
 
@@ -207,13 +212,6 @@ class MediaPlayerActivity : AppCompatActivity() {
             binding.ivPlay.visibility = View.VISIBLE
             binding.ivPause.visibility = View.GONE
         }
-    }
-
-
-
-    private fun updateNotification(isPlaying: Boolean) {
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(1, NotificationUtils.createNotification(this,mediaSession, isPlaying, currentPosition, duration))
     }
 
     companion object {

@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.media.session.MediaSession
@@ -15,7 +16,9 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.media.app.NotificationCompat.MediaStyle
 import com.example.exoplayer.MediaPlayerActivity.Companion.onPlayAction
 
@@ -182,5 +185,10 @@ object NotificationUtils {
         val intent = Intent(context, NotificationController::class.java)
         intent.action = action
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE)
+    }
+
+    fun updateNotification(context: Context, isPlaying: Boolean, mediaSession: MediaSessionCompat,currentPosition: Long, duration: Long) {
+        val notificationManager = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(1, createNotification(context,mediaSession, isPlaying, currentPosition, duration))
     }
 }

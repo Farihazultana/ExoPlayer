@@ -66,7 +66,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         updateProgressHandler = Handler(Looper.getMainLooper())
         updateProgressRunnable = object : Runnable {
             override fun run() {
-                updateNotification(isPlaying)
+                NotificationUtils.updateNotification(this@MusicPlayerService, isPlaying(), mediaSession, currentPosition, duration)
                 updateProgressHandler.postDelayed(this, UPDATE_INTERVAL_MILLIS.toLong())
             }
         }
@@ -287,10 +287,6 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
     override fun initializePlayer(songsUrls : ArrayList<String>) {
         player = ExoPlayer.Builder(this).build()
 
-        val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
-        val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
-        val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
-
         player.clearMediaItems()
 
         for (url in songsUrls){
@@ -298,18 +294,6 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
             player.addMediaItem(mediaItem)
         }
 
-        /*val firstItem = MediaItem.fromUri(url1!!)
-        val secondItem = MediaItem.fromUri(url2!!)
-        val thirdItem = MediaItem.fromUri(url3!!)
-
-
-        // Set the media item to be played.
-        player.addMediaItem(firstItem)
-        player.addMediaItem(secondItem)
-        player.addMediaItem(thirdItem)*/
-
-
-        // Prepare the player.
         player.prepare()
 
     }
@@ -322,12 +306,8 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         val intent = Intent("PlaybackState")
         intent.putExtra("isPlaying", isPlaying)
         sendBroadcast(intent)
-        updateNotification(isPlaying)
-    }
+        NotificationUtils.updateNotification(this, isPlaying(), mediaSession, currentPosition, duration)
 
-    private fun updateNotification(isPlaying: Boolean) {
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(1, NotificationUtils.createNotification(this,mediaSession, isPlaying, currentPosition, duration))
     }
 
 
