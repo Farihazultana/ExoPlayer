@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 import android.media.session.MediaSession
 import android.os.Binder
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.IInterface
@@ -16,6 +17,8 @@ import android.os.Parcel
 import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -69,13 +72,13 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         }
         updateProgressHandler.postDelayed(updateProgressRunnable, UPDATE_INTERVAL_MILLIS.toLong())
 
-        initializePlayer()
+        //initializePlayer()
+        player = ExoPlayer.Builder(this).build()
         MediaPlayerActivity.setOnPlayAction(this)
-
-
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(1, NotificationUtils.createNotification(this, mediaSession, isPlaying, currentPosition, duration),FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
 
@@ -159,9 +162,6 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         //startForeground(1, createNotification(isPlaying))
         player.play()
         isPlaying = true
-        mediaSession.addOnActiveChangeListener {
-
-        }
         notifyPlaybackStateChanged()
     }
 
@@ -284,15 +284,21 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         )*/
     }
 
-    override fun initializePlayer() {
+    override fun initializePlayer(songsUrls : ArrayList<String>) {
         player = ExoPlayer.Builder(this).build()
 
         val url1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
         val url2 = "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
         val url3 = "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
 
+        player.clearMediaItems()
 
-        val firstItem = MediaItem.fromUri(url1!!)
+        for (url in songsUrls){
+            val mediaItem = MediaItem.fromUri(url)
+            player.addMediaItem(mediaItem)
+        }
+
+        /*val firstItem = MediaItem.fromUri(url1!!)
         val secondItem = MediaItem.fromUri(url2!!)
         val thirdItem = MediaItem.fromUri(url3!!)
 
@@ -300,7 +306,7 @@ class MusicPlayerService : Service(), IBinder, PlayAction {
         // Set the media item to be played.
         player.addMediaItem(firstItem)
         player.addMediaItem(secondItem)
-        player.addMediaItem(thirdItem)
+        player.addMediaItem(thirdItem)*/
 
 
         // Prepare the player.

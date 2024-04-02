@@ -5,7 +5,7 @@ import androidx.media3.exoplayer.ExoPlayer
 interface PlayAction {
 
     fun getPlayer() : ExoPlayer
-    fun initializePlayer()
+    fun initializePlayer(songsUrls : ArrayList<String>)
     fun playMusic()
 
     fun pauseMusic()

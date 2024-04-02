@@ -84,7 +84,12 @@ class MediaPlayerActivity : AppCompatActivity() {
         mediaSession = MediaSessionCompat(this, "MusicPlayerService")
 
 
-
+        val songsUrls = arrayListOf(
+            "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+            "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
+            "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
+        )
+        onPlayAction.initializePlayer(songsUrls)
         binding.playerView.player = onPlayAction.getPlayer()
 
 
